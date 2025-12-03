@@ -4,70 +4,104 @@
 #include <stdlib.h>
 #include <time.h>
 
+void clear_screen_fast() {
+    system("cls");
+}
+
 int main() {
     srand(time(0));
 
-    int x = 1;              // player position (0 to 2)
-    int step = 0;           // obstacle vertical movement
-    int obstaclePos = rand() % 3;   // 0,1,2 lane
+    printf("SHOOTER GAME\n");
+    printf("-----------------------\n");
+    printf("Press any key to start\n");
+    _getch();  // wait for key press
+
+    // Game variables declared outside the label to avoid compilation issues
+    int x, score, step;
+    int obstacleCount, obstacles[2];
+    char obstacleChar = '*';
+    char playerChar = 'A';
+    int speed;
+
+start_game:
+    // Initialize game variables
+    x = 1;  // player starts in middle lane
+    score = 0;
+    step = 0;
+    speed = 120;  // initial speed in milliseconds
+
+    obstacleCount = (rand() % 2) + 1;  // 1 or 2 obstacles
+    for (int i = 0; i < obstacleCount; i++)
+        obstacles[i] = rand() % 3;
 
     while (1) {
-
-        // ---- INPUT ----
+        // Handle player input
         if (_kbhit()) {
-            char ch = getch();
+            char key = _getch();
+            if (key == 0 || key == 224)
+                key = _getch();
 
-            if (ch == 75 && x > 0)        // LEFT arrow
-                x--;
-
-            if (ch == 77 && x < 2)        // RIGHT arrow
-                x++;
+            if (key == 75 && x > 0) x--;  // left arrow
+            if (key == 77 && x < 2) x++;  // right arrow
         }
 
-        // ---- DRAW ----
-        system("cls");
-        printf("|--- --- ---|\n");
+        // Draw game screen
+        clear_screen_fast();
+        printf("SHOOTER GAME SCORE: %d\n", score);
+        printf("-------------------------------\n");
 
         for (int i = 0; i < 10; i++) {
             if (i == step) {
-
-                if (obstaclePos == 0)
-                    printf("| %c        |\n", 1);
-
-                else if (obstaclePos == 1)
-                    printf("|     %c    |\n", 1);
-
-                else if (obstaclePos == 2)
-                    printf("|        %c |\n", 1);
-
+                char lane[3] = {' ', ' ', ' '};
+                for (int j = 0; j < obstacleCount; j++)
+                    lane[obstacles[j]] = obstacleChar;
+                printf("|  %c    %c    %c  |\n", lane[0], lane[1], lane[2]);
             } else {
-                printf("|           |\n");
+                printf("|                 |\n");
             }
         }
 
-        // ---- PLAYER ----
+        // Draw player
         if (x == 0)
-            printf("| %c        |\n", 6);
+            printf("|  %c              |\n", playerChar);
         else if (x == 1)
-            printf("|     %c    |\n", 6);
-        else if (x == 2)
-            printf("|        %c |\n", 6);
+            printf("|       %c         |\n", playerChar);
+        else
+            printf("|             %c   |\n", playerChar);
 
-        // ---- COLLISION ----
-        if (step == 10 && x == obstaclePos) {
-            printf("\nGAME OVER!\n");
-            break;
+        // Check for collisions
+        if (step == 10) {
+            int hit = 0;
+            for (int i = 0; i < obstacleCount; i++)
+                if (x == obstacles[i])
+                    hit = 1;
+
+            if (hit) {
+                printf("\nGAME OVER!\nPress R to restart or Q to quit\n");
+                while (1) {
+                    if (_kbhit()) {
+                        char c = _getch();
+                        if (c == 'r' || c == 'R') goto start_game;
+                        if (c == 'q' || c == 'Q') return 0;
+                    }
+                }
+            }
         }
 
-        Sleep(120);
-
-        // Move obstacle down
+        Sleep(speed);
         step++;
 
-        // Reset when reaches bottom
+        // Move obstacles down
         if (step > 10) {
+            score++;
             step = 0;
-            obstaclePos = rand() % 3; // new lane
+
+            obstacleCount = (rand() % 2) + 1;
+            for (int i = 0; i < obstacleCount; i++)
+                obstacles[i] = rand() % 3;
+
+            if (speed > 40)
+                speed -= 2;  // increase difficulty gradually
         }
     }
 
