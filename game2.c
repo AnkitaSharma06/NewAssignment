@@ -2,58 +2,88 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <windows.h>  // For Sleep() and clearing screen in Windows
+
+void clearScreen() {
+    system("cls");
+}
 
 int main()
 {
     const char *words[] = {
-    "apple","book","cat","dog","tree","sun","water","house","milk","chair",
-    "school","pen","ball","fish","bird","star","car","door","hat","road",
-    "juxtapose","quizzical","xylophone","zephyr","mnemonic","pseudonym",
-    "onomatopoeia","labyrinth","ephemeral","cacophony","philanthropy",
-    "idiosyncrasy","quintessential","obfuscate","perspicacious","verisimilitude",
-    "sesquipedalian","circumlocution","magnanimous","antediluvian"
+        "apple","book","cat","dog","tree","sun","water","house","milk","chair",
+        "school","pen","ball","fish","bird","star","car","door","hat","road",
+        "juxtapose","quizzical","xylophone","zephyr","mnemonic","pseudonym",
+        "onomatopoeia","labyrinth","ephemeral","cacophony","philanthropy",
+        "idiosyncrasy","quintessential","obfuscate","perspicacious","verisimilitude",
+        "sesquipedalian","circumlocution","magnanimous","antediluvian"
     };
 
     int n = sizeof(words) / sizeof(words[0]);
-    int rounds = 5;
-    int correct = 0;
-    int wrong = 0;
+
+    int choice;
+    int totalTime = 0;
 
     printf("=== Typing Speed Test ===\n");
-    printf("Type the words as fast and correctly as you can!\n\n");
+    printf("Choose a time limit:\n");
+    printf("1. 1 Minute\n");
+    printf("2. 3 Minutes\n");
+    printf("3. 5 Minutes\n");
+    printf("Enter your choice: ");
+    scanf("%d", &choice);
 
+    if (choice == 1) totalTime = 60;
+    else if (choice == 2) totalTime = 180;
+    else if (choice == 3) totalTime = 300;
+    else {
+        printf("Invalid choice! Exiting...");
+        return 0;
+    }
+
+    clearScreen();
+    printf("Timer starts NOW! Type as many words as you can!\n");
+    Sleep(1000);
+    clearScreen();
+
+    int score = 0;
+    char input[50];
     srand(time(0));
-    clock_t start = clock();
 
-    for (int i = 0; i < rounds; i++)
+    time_t start = time(NULL);
+    time_t now;
+
+    while (1)
     {
-        const char *word = words[rand() % n];
-        char input[50];
+        now = time(NULL);
+        int timeLeft = totalTime - (int)(now - start);
 
-        printf("Word %d: %s\n", i + 1, word);
-        printf("Your input: ");
+        if (timeLeft <= 0)
+            break;
+
+        const char *word = words[rand() % n];
+
+        printf("Time Left: %d seconds\n", timeLeft);
+        printf("Word: %s\n", word);
+        printf("Type: ");
         scanf("%s", input);
 
-        if (strcmp(input, word) == 0)
-        {
-            printf("Correct!\n\n");
-            correct++;
-        }
-        else
-        {
-            printf("Wrong! The correct word was: %s\n\n", word);
-            wrong++;
+        clearScreen();
+
+        if (strcmp(input, word) == 0) {
+            score++;
+            printf("Correct! Score: %d\n\n", score);
+        } else {
+            printf("Wrong! Score: %d\n\n", score);
         }
     }
 
-    clock_t end = clock();
-    double timeTaken = ((double)(end - start)) / CLOCKS_PER_SEC;
+    clearScreen();
+    printf("=== TIME'S UP! ===\n");
+    printf("Total Correct Words: %d\n", score);
+    printf("Time Used: %d seconds\n", totalTime);
 
-    printf("=== Test Finished ===\n");
-    printf("Correct: %d\n", correct);
-    printf("Wrong: %d\n", wrong);
-    printf("Time Taken: %.2f seconds\n", timeTaken);
-    printf("Typing Speed: %.2f words per minute\n", (rounds / timeTaken) * 60);
+    double wpm = (score * 60.0) / totalTime;
+    printf("Typing Speed: %.2f WPM\n", wpm);
 
     return 0;
 }
